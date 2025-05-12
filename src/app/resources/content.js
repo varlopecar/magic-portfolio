@@ -45,6 +45,7 @@ const social = [
 const home = {
   path: "/",
   label: "Home",
+  image: "/images/home.png",
   title: `${person.name}`,
   description: `Portfolio website showcasing my work as a ${person.role}`,
   headline: <>Carlos Vargas</>,
