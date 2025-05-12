@@ -2,7 +2,7 @@
 
 View my portfolio [here](https://varlopecar.me).
 
-- ![Portfolio Preview](https://varlopecar.me/images/home.jpg)
+- ![Portfolio Preview](https://varlopecar.me/images/home.png)
 
 # **About This Project**
 
