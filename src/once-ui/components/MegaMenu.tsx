@@ -35,6 +35,12 @@ export interface MegaMenuProps extends React.ComponentProps<typeof Flex> {
 export const MegaMenu: React.FC<MegaMenuProps> = ({ menuGroups, className, ...rest }) => {
   const pathname = usePathname();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [trackedPathname, setTrackedPathname] = useState(pathname);
+
+  if (pathname !== trackedPathname) {
+    setTrackedPathname(pathname);
+    setActiveDropdown(null);
+  }
   const [dropdownPosition, setDropdownPosition] = useState({ left: 0, width: 0 });
   const [isFirstAppearance, setIsFirstAppearance] = useState(true);
   
@@ -83,11 +89,6 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({ menuGroups, className, ...re
       return () => clearTimeout(timer);
     }
   }, [activeDropdown]);
-
-  // Close dropdown when pathname changes (navigation occurs)
-  useEffect(() => {
-    setActiveDropdown(null);
-  }, [pathname]);
 
   // Check if a menu item should be selected based on the current path
   const isSelected = (href?: string) => {

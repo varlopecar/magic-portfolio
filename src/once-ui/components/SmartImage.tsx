@@ -32,12 +32,31 @@ const SmartImage: React.FC<SmartImageProps> = ({
   ...rest
 }) => {
   const [isEnlarged, setIsEnlarged] = useState(false);
+  const [enlargeTransform, setEnlargeTransform] = useState("translate(0, 0) scale(1)");
   const imageRef = useRef<HTMLDivElement>(null);
 
   const handleClick = () => {
-    if (enlarge) {
-      setIsEnlarged(!isEnlarged);
+    if (!enlarge) return;
+
+    if (isEnlarged) {
+      setIsEnlarged(false);
+      return;
     }
+
+    const element = imageRef.current;
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const scaleX = window.innerWidth / rect.width;
+      const scaleY = window.innerHeight / rect.height;
+      const scale = Math.min(scaleX, scaleY) * 0.9;
+      const translateX = (window.innerWidth - rect.width) / 2 - rect.left;
+      const translateY = (window.innerHeight - rect.height) / 2 - rect.top;
+      setEnlargeTransform(
+        `translate(${translateX}px, ${translateY}px) scale(${scale})`,
+      );
+    }
+
+    setIsEnlarged(true);
   };
 
   useEffect(() => {
@@ -74,26 +93,6 @@ const SmartImage: React.FC<SmartImageProps> = ({
     };
   }, [isEnlarged]);
 
-  const calculateTransform = () => {
-    if (!imageRef.current) return {};
-
-    const rect = imageRef.current.getBoundingClientRect();
-    const scaleX = window.innerWidth / rect.width;
-    const scaleY = window.innerHeight / rect.height;
-    const scale = Math.min(scaleX, scaleY) * 0.9;
-
-    const translateX = (window.innerWidth - rect.width) / 2 - rect.left;
-    const translateY = (window.innerHeight - rect.height) / 2 - rect.top;
-
-    return {
-      transform: isEnlarged
-        ? `translate(${translateX}px, ${translateY}px) scale(${scale})`
-        : "translate(0, 0) scale(1)",
-      transition: "all 0.3s ease-in-out",
-      zIndex: isEnlarged ? 10 : undefined,
-    };
-  };
-
   const isYouTubeVideo = (url: string) => {
     const youtubeRegex =
       /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -126,7 +125,9 @@ const SmartImage: React.FC<SmartImageProps> = ({
           height: aspectRatio ? "" : height ? `${height}rem` : "100%",
           aspectRatio,
           borderRadius: isEnlarged ? "0" : undefined,
-          ...calculateTransform(),
+          transform: isEnlarged ? enlargeTransform : "translate(0, 0) scale(1)",
+          transition: "all 0.3s ease-in-out",
+          zIndex: isEnlarged ? 10 : undefined,
         }}
         onClick={handleClick}
         {...rest}

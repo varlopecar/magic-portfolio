@@ -9,7 +9,7 @@ import { Metadata } from 'next';
 import { Meta, Schema } from "@/once-ui/modules";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const posts = getPosts(["src", "app", "blog", "posts"]);
+  const posts = getPosts("blog");
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -23,7 +23,7 @@ export async function generateMetadata({
   const routeParams = await params;
   const slugPath = Array.isArray(routeParams.slug) ? routeParams.slug.join('/') : routeParams.slug || '';
 
-  const posts = getPosts(["src", "app", "blog", "posts"])
+  const posts = getPosts("blog")
   let post = posts.find((post) => post.slug === slugPath);
 
   if (!post) return {};
@@ -43,7 +43,7 @@ export default async function Blog({
   const routeParams = await params;
   const slugPath = Array.isArray(routeParams.slug) ? routeParams.slug.join('/') : routeParams.slug || '';
 
-  let post = getPosts(["src", "app", "blog", "posts"]).find((post) => post.slug === slugPath);
+  let post = getPosts("blog").find((post) => post.slug === slugPath);
 
   if (!post) {
     notFound();

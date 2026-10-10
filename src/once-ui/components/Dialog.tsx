@@ -72,6 +72,16 @@ const Dialog: React.FC<DialogProps> = forwardRef<HTMLDivElement, DialogProps>(
     const dialogRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(isOpen);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [trackedOpen, setTrackedOpen] = useState(isOpen);
+
+    if (isOpen !== trackedOpen) {
+      setTrackedOpen(isOpen);
+      if (isOpen) {
+        setIsVisible(true);
+      } else {
+        setIsAnimating(false);
+      }
+    }
     const { stackedDialogOpen, setStackedDialogOpen } = useContext(DialogContext);
 
     useEffect(() => {
@@ -89,16 +99,16 @@ const Dialog: React.FC<DialogProps> = forwardRef<HTMLDivElement, DialogProps>(
 
     useEffect(() => {
       if (isOpen) {
-        setIsVisible(true);
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           setIsAnimating(true);
         }, 0);
-      } else {
-        setIsAnimating(false);
-        setTimeout(() => {
-          setIsVisible(false);
-        }, 300);
+        return () => clearTimeout(timer);
       }
+
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 300);
+      return () => clearTimeout(timer);
     }, [isOpen]);
 
     const handleKeyDown = useCallback(

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Flex, DatePicker } from ".";
 
 export interface DateRange {
@@ -32,15 +32,17 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [trackedValue, setTrackedValue] = useState(value);
 
-  useEffect(() => {
+  if (value !== trackedValue) {
+    setTrackedValue(value);
     if (value) {
       setInternalValue({
         startDate: value.startDate,
         endDate: value.endDate,
       });
     }
-  }, [value]);
+  }
 
   const handleDateChange = (date: Date) => {
     if (!internalValue.startDate || (internalValue.startDate && internalValue.endDate)) {

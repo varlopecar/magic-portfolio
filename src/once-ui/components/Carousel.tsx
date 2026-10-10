@@ -26,7 +26,6 @@ const Carousel: React.FC<CarouselProps> = ({
 }) => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState(revealedByDefault);
-  const [initialTransition, setInitialTransition] = useState(revealedByDefault);
   const nextImageRef = useRef<HTMLImageElement | null>(null);
   const transitionTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -62,16 +61,25 @@ const Carousel: React.FC<CarouselProps> = ({
   };
 
   useEffect(() => {
-    if (!revealedByDefault && !initialTransition) {
-      setIsTransitioning(true);
-      setInitialTransition(true);
+    if (revealedByDefault) {
+      return () => {
+        if (transitionTimeoutRef.current) {
+          clearTimeout(transitionTimeoutRef.current);
+        }
+      };
     }
+
+    const frame = requestAnimationFrame(() => {
+      setIsTransitioning(true);
+    });
+
     return () => {
+      cancelAnimationFrame(frame);
       if (transitionTimeoutRef.current) {
         clearTimeout(transitionTimeoutRef.current);
       }
     };
-  }, [revealedByDefault, initialTransition]);
+  }, [revealedByDefault]);
 
   if (images.length === 0) {
     return null;

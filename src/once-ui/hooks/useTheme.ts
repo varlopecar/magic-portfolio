@@ -1,26 +1,34 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { style } from '@/app/resources';
 
-export function useTheme() {
-  const [theme, setTheme] = useState(style.theme);
+const themeListeners = new Set<() => void>();
 
-  // Load theme from localStorage on mount
+function subscribe(listener: () => void) {
+  themeListeners.add(listener);
+  return () => {
+    themeListeners.delete(listener);
+  };
+}
+
+function readTheme() {
+  return localStorage.getItem('theme') || style.theme;
+}
+
+export function useTheme() {
+  const theme = useSyncExternalStore(subscribe, readTheme, () => style.theme);
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    }
-  }, []);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
+    const newTheme = readTheme() === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-  }, [theme]);
+    themeListeners.forEach((listener) => listener());
+  }, []);
 
   return {
     theme,

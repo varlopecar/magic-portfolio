@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { ToggleButton, Scroller, Flex } from ".";
 import type { ToggleButtonProps } from "./ToggleButton";
 
@@ -35,12 +35,14 @@ const SegmentedControl: React.FC<SegmentedControlProps> = ({
   });
 
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [trackedSelected, setTrackedSelected] = useState(selected);
 
-  useEffect(() => {
+  if (selected !== trackedSelected) {
+    setTrackedSelected(selected);
     if (selected !== undefined) {
       setInternalSelected(selected);
     }
-  }, [selected]);
+  }
 
   const handleButtonClick = (
     clickedButton: ButtonOption,

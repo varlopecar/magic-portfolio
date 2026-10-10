@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -22,56 +22,61 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+const themeListeners = new Set<() => void>();
+
+function subscribeToTheme(listener: () => void) {
+  themeListeners.add(listener);
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  const onChange = () => listener();
+  media.addEventListener("change", onChange);
+  return () => {
+    themeListeners.delete(listener);
+    media.removeEventListener("change", onChange);
+  };
+}
+
+function readTheme(): Theme {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "light" || savedTheme === "dark" || savedTheme === "system") {
+    return savedTheme;
+  }
+  return "system";
+}
+
+function readResolvedTheme(): "light" | "dark" {
+  const theme = readTheme();
+  if (theme === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return theme;
+}
+
+function notifyThemeListeners() {
+  themeListeners.forEach((listener) => listener());
+}
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  // Start with system theme on server, will be updated on client
-  const [theme, setTheme] = useState<Theme>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
-  const [mounted, setMounted] = useState(false);
+  const theme = useSyncExternalStore<Theme>(
+    subscribeToTheme,
+    readTheme,
+    () => "system",
+  );
+  const resolvedTheme = useSyncExternalStore<"light" | "dark">(
+    subscribeToTheme,
+    readResolvedTheme,
+    () => "dark",
+  );
 
-  // Initialize theme from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
-    setMounted(true);
-  }, []);
-
-  // Update resolvedTheme when theme changes
-  useEffect(() => {
-    if (!mounted) return;
-
-    const root = document.documentElement;
-    if (theme === 'system') {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setResolvedTheme(isDark ? 'dark' : 'light');
-      root.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    } else {
-      setResolvedTheme(theme === 'dark' ? 'dark' : 'light');
-      root.setAttribute('data-theme', theme);
-    }
-  }, [theme, mounted]);
-
-  // Listen for system theme changes
-  useEffect(() => {
-    if (!mounted || theme !== 'system') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setResolvedTheme(e.matches ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme, mounted]);
+    document.documentElement.setAttribute("data-theme", resolvedTheme);
+  }, [resolvedTheme]);
 
   const value = {
     theme,
     resolvedTheme,
     setTheme: (newTheme: Theme) => {
-      localStorage.setItem('theme', newTheme);
-      setTheme(newTheme);
+      localStorage.setItem("theme", newTheme);
+      notifyThemeListeners();
     },
   };
 

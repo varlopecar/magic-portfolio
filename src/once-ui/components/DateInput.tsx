@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Input, DropdownWrapper, Flex, DatePicker } from ".";
 
 interface DateInputProps extends Omit<React.ComponentProps<typeof Input>, "onChange" | "value"> {
@@ -43,12 +43,14 @@ export const DateInput: React.FC<DateInputProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value ? formatDate(value, timePicker) : "");
+  const [trackedValue, setTrackedValue] = useState({ value, timePicker });
 
-  useEffect(() => {
+  if (value !== trackedValue.value || timePicker !== trackedValue.timePicker) {
+    setTrackedValue({ value, timePicker });
     if (value) {
       setInputValue(formatDate(value, timePicker));
     }
-  }, [value, timePicker]);
+  }
 
   const handleDateChange = useCallback(
     (date: Date) => {

@@ -137,10 +137,26 @@ export const KbarContent: React.FC<KbarContentProps> = ({ isOpen, onClose, items
     optionRefs.current = Array(nonCustomOptions.length).fill(null);
   }, [nonCustomOptions.length]);
 
-  // Reset highlighted index when search query changes
-  useEffect(() => {
-    setHighlightedIndex(nonCustomOptions.length > 0 ? 0 : null);
-  }, [searchQuery, nonCustomOptions.length]);
+  const highlightKey = `${searchQuery}:${nonCustomOptions.length}`;
+  const [trackedHighlightKey, setTrackedHighlightKey] = useState(highlightKey);
+  const [trackedOpen, setTrackedOpen] = useState(isOpen);
+
+  if (isOpen !== trackedOpen) {
+    setTrackedOpen(isOpen);
+    if (!isOpen) {
+      setSearchQuery("");
+      setHighlightedIndex(null);
+    } else if (nonCustomOptions.length > 0) {
+      setHighlightedIndex(0);
+    }
+  }
+
+  if (highlightKey !== trackedHighlightKey) {
+    setTrackedHighlightKey(highlightKey);
+    if (isOpen) {
+      setHighlightedIndex(nonCustomOptions.length > 0 ? 0 : null);
+    }
+  }
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -242,19 +258,6 @@ export const KbarContent: React.FC<KbarContentProps> = ({ isOpen, onClose, items
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
-
-  // Clear search query when kbar is closed
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchQuery("");
-      setHighlightedIndex(null);
-    } else {
-      // Set the first item as highlighted when opened
-      if (nonCustomOptions.length > 0) {
-        setHighlightedIndex(0);
-      }
-    }
-  }, [isOpen, nonCustomOptions]);
 
   // Focus search input when kbar is opened
   useEffect(() => {
@@ -392,9 +395,16 @@ export interface KbarProps {
 }
 
 export const Kbar: React.FC<KbarProps> = ({ items, children, ...rest }) => {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [pathname, setPathname] = useState("");
-  const router = useRouter();
+  const [trackedPathname, setTrackedPathname] = useState(pathname);
+
+  if (pathname !== trackedPathname) {
+    setTrackedPathname(pathname);
+    if (isOpen) {
+      setIsOpen(false);
+    }
+  }
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -403,13 +413,6 @@ export const Kbar: React.FC<KbarProps> = ({ items, children, ...rest }) => {
   const handleClose = useCallback(() => {
     setIsOpen(false);
   }, []);
-
-  // Close Kbar when pathname changes
-  useEffect(() => {
-    if (isOpen) {
-      handleClose();
-    }
-  }, [pathname, isOpen, handleClose]);
 
   // Add keyboard shortcut listener
   useEffect(() => {

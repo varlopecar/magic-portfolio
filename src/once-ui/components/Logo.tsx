@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import classNames from "classnames";
 import styles from "./Logo.module.scss";
@@ -13,6 +14,30 @@ const sizeMap: Record<string, SpacingToken> = {
   m: "32",
   l: "40",
   xl: "48",
+};
+
+const LogoMark = ({
+  src,
+  size,
+}: {
+  src: string;
+  size: keyof typeof sizeMap;
+}) => {
+  const pixels = Number(sizeMap[size]);
+
+  return (
+    <Image
+      alt="Trademark"
+      src={src}
+      width={pixels}
+      height={pixels}
+      unoptimized
+      style={{
+        height: `var(--static-space-${sizeMap[size]})`,
+        width: "auto",
+      }}
+    />
+  );
 };
 
 interface LogoProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -55,17 +80,7 @@ const Logo: React.FC<LogoProps> = ({
           className={styles.icon}
         />
       )}
-      {iconSrc && (
-        // @ts-ignore
-        <img
-          style={{
-            height: `var(--static-space-${sizeMap[size]})`,
-            width: "auto",
-          }}
-          alt="Trademark"
-          src={iconSrc}
-        />
-      )}
+      {iconSrc && <LogoMark src={iconSrc} size={size} />}
       {wordmark && !wordmarkSrc && (
         <div
           style={{
@@ -74,17 +89,7 @@ const Logo: React.FC<LogoProps> = ({
           className={styles.type}
         />
       )}
-      {wordmarkSrc && (
-        // @ts-ignore
-        <img
-          style={{
-            height: `var(--static-space-${sizeMap[size]})`,
-            width: "auto",
-          }}
-          alt="Trademark"
-          src={wordmarkSrc}
-        />
-      )}
+      {wordmarkSrc && <LogoMark src={wordmarkSrc} size={size} />}
     </>
   );
 
